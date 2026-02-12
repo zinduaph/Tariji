@@ -1,1 +1,2 @@
 *.env
+* added .gitignore for the backend .env file
