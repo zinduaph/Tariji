@@ -92,10 +92,10 @@ export const lipaOnline = async (req, res) => {
         const password = generatePassword(shortCode, passkey, timestamp);
 
         // building the callback URL using ngro for local testing
-         const ngorkUrl = getNgrokUrl();
+       /*  const ngorkUrl = getNgrokUrl();
          if (ngorkUrl) {
             console.log('Using ngrok URL for callback:', ngorkUrl);
-         }
+         }*/
          const callbackPath = '/api/payment/lipa-online/callback';
          const callbackURL = `${process.env.BACKEND_URL}${callbackPath}`;
 

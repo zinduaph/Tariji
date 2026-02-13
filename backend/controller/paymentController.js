@@ -244,10 +244,10 @@ export const  growthPlan = async (req, res) => {
         const password = Buffer.from(shortCode + passkey + timestamp).toString('base64');
         
         // building the callback url using ngrok for local testing
-        const ngrokUrl = getNgrokUrl();
+      /*  const ngrokUrl = getNgrokUrl();
         if (ngrokUrl) {
             return res.status(500).json({ success: false, message: 'Ngrok URL not available' });
-        }
+        }*/
         const callbackPath = '/api/subscription/callback';
         const callbackURL = `${process.env.BACKEND_URL}${callbackPath}`;
 
@@ -386,7 +386,7 @@ export const proPlan = async (req,res) => {
         } else {
             subscription.status = 'payment_failed';
             await subscription.save();
-            await sendSubscriptionFailedEmail(user, subscription, 'Failed to initiate payment');
+
             return res.status(400).json({
                 success: false,
                 message: 'Failed to initiate payment. Please try again.'
@@ -460,7 +460,7 @@ export const subscriptionCallback = async (req, res) => {
             const user = await userModel.findById(subscription.userId);
             if (user) {
                 const reason = callbackData.Body.stkCallback.ResultDesc || 'Payment was not completed';
-                await sendSubscriptionFailedEmail(user, subscription, reason);
+                
             }
 
             console.log(`❌ Subscription payment failed for ${subscription._id}: ${callbackData.Body.stkCallback.ResultDesc}`);
