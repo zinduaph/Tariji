@@ -72,7 +72,7 @@ const Navbar = () => {
                             <Link to="/login" className={`px-4 py-2 rounded-full transition-all duration-500 ${isScrolled ? "text-gray-700 hover:bg-gray-100" : "text-white hover:bg-white/20"}`}>
                                 Login
                             </Link>
-                            <Link to="/register" className={`px-4 py-2 rounded-full transition-all duration-500 ${isScrolled ? "bg-black text-white hover:bg-gray-800" : "bg-white text-black hover:bg-gray-100"}`}>
+                            <Link to="/login" className={`px-4 py-2 rounded-full transition-all duration-500 ${isScrolled ? "bg-black text-white hover:bg-gray-800" : "bg-white text-black hover:bg-gray-100"}`}>
                                 Register
                             </Link>
                         </div>

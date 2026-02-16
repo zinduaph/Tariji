@@ -200,7 +200,15 @@ const Product = () => {
                         <div className='flex gap-6 items-center items-center'>
                             <h1 className='text-2xl md:text-3xl text-orange-500'>{product.name}</h1>
                             <button 
-                                onClick={() => addtocart(product.id)} 
+                                onClick={() => {
+                                    const productInfo = {
+                                        name: product.name,
+                                        price: product.price,
+                                        image: Array.isArray(product.image) ? product.image[0] : product.image,
+                                        description: product.description
+                                    };
+                                    addtocart(product.id || product._id, productInfo);
+                                }} 
                                 className="bg-black text-white hover:bg-orange-600 p-2 inline-flex w-45 md:w-50  gap-2 rounded-md mt-4 transition-colors"
                             >
                                 Add to cart <PlusCircle className="" />

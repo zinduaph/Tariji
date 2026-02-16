@@ -75,10 +75,10 @@ const Login = () => {
     }
 
     return (
-      <div className="flex justify-center mt-13 md:mt-20 items-center">
+      <div className="flex justify-center mt-20 md:mt-24 items-center">
           <form
             
-            className="sm:w-87.5 w-full text-center  bg-gray-900 border border-gray-800 rounded-2xl px-8">
+            className="w-80 md:w-100 text-center  bg-gray-900 border border-gray-800 rounded-2xl px-8">
            
 
             <div className="flex items-center mt-4">

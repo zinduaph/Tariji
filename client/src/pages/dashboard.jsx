@@ -95,7 +95,7 @@ const Dashbord = () => {
     
     return (
         <>
-        <div className="mt-15 md:mt-17">
+        <div className="mt-15 md:mt-19">
 
            <div className="flex flex-col md:flex-row p-5 items-center gap-20  md:gap-40">
             <div className="border border-gray-500 flex flex-col justify-center items-center gap-3 p-4 shadow-md w-40 md:w-60 rounded-md">
@@ -109,7 +109,7 @@ const Dashbord = () => {
             
           <h2 className="text-2xl mt-2 md:text-3xl font-semibold flex justify-center">Products sold</h2>
 
-          <div className="mt-6 flex flex-col md:flex-row gap-8">
+          <div className="mt-6 flex p-4 flex-col md:flex-row gap-8">
            <div className="bg-green-100 border border-green-400 p-4 rounded-md">
             <p className="text-lg text-green-600 flex items-center gap-2"><DollarSign size={24} />Total Revenue</p>
             <p className="text-3xl md:text-4xl text-orange-500 font-semibold">

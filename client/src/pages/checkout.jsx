@@ -6,16 +6,53 @@ import { X, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 const CheckoutPage = () => {
-    const { getCartItems, currency, getTotalCartAmount, removeFromCart, cartItems: contextCartItems } = useContext(shopContext);
+    const { currency, cartProducts, getTotalCartAmount, removeFromCart, cartItems: contextCartItems } = useContext(shopContext);
     const [cartItems, setCartItems] = useState([]);
     const [total, setTotal] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Build cart items directly instead of using getCartItems() to avoid stale closure
+    const buildCartItems = () => {
+        const items = [];
+        for (const itemId in contextCartItems) {
+            if (contextCartItems[itemId] > 0) {
+                // First try to get from cartProducts, then from localStorage
+                let itemInfo = cartProducts[itemId];
+                if (!itemInfo) {
+                    // Try to get from localStorage directly as fallback
+                    const savedCartProducts = localStorage.getItem('cartProducts');
+                    if (savedCartProducts) {
+                        const parsed = JSON.parse(savedCartProducts);
+                        itemInfo = parsed[itemId];
+                    }
+                }
+                if (itemInfo) {
+                    items.push({
+                        ...itemInfo,
+                        id: itemInfo._id || itemInfo.id || itemId,
+                        _id: itemInfo._id || itemId,
+                        quantity: contextCartItems[itemId]
+                    });
+                }
+            }
+        }
+        return items;
+    };
 
     // Update cart items when they change
     useEffect(() => {
-        const items = getCartItems();
-        setCartItems(items);
-        setTotal(getTotalCartAmount());
-    }, [contextCartItems, getCartItems, getTotalCartAmount]);
+        // Wait for cart data to be loaded
+        if (Object.keys(contextCartItems).length > 0) {
+            const items = buildCartItems();
+            setCartItems(items);
+            setTotal(getTotalCartAmount());
+        } else {
+            setCartItems([]);
+            setTotal(0);
+        }
+        setIsLoading(false);
+    }, [contextCartItems, cartProducts, getTotalCartAmount]);
+
 
     const [showPlaceOrderModal, setShowPlaceOrderModal] = useState(false);
     const [formData, setFormData] = useState({
@@ -249,10 +286,14 @@ const CheckoutPage = () => {
     };
 
     return (
-        <div className="container mt-5 md:mt-15 mx-auto p-4 max-w-4xl">
-            <h1 className="text-3xl font-bold mb-6">Checkout</h1>
+        <div className="container mt-13 md:mt-19 mx-auto p-4 max-w-4xl">
+            <h1 className="text-3xl font-bold mb-6">Checkout <span className="text-orange-500">page</span></h1>
             
-            {cartItems.length === 0 ? (
+            {isLoading ? (
+                <div className="text-center py-20">
+                    <p className="text-xl text-gray-500">Loading cart...</p>
+                </div>
+            ) : cartItems.length === 0 ? (
                 <div className="text-center py-20">
                     <p className="text-xl text-gray-500">Your cart is empty.</p>
                     <p className="text-gray-400 mt-2">Add some digital products to your cart to get started.</p>

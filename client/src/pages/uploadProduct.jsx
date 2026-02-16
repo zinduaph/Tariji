@@ -95,7 +95,7 @@ const uploadProduct = () => {
 
     return (
         <>
-        <div className="mt-10">
+        <div className="mt-15 md:mt-24">
 
            <div className="flex justify-center w-60 md:w-100 m-auto items-center"> 
             <div className="flex flex-col  mt-4 gap-6">

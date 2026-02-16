@@ -43,13 +43,13 @@ const YourPage = () => {
 
     return (
         <>
-        <div className="mt-17">
+        <div className="mt-17 md:mt-24">
            
-           <div className="flex justify-between items-center">
+           <div className="flex p-2 justify-between items-center">
              <h1 className="text-2xl md:text-3xl text-orange-500 font-semibold">Your products Page</h1>
              <button 
                 onClick={copyStoreLink}
-                className="flex items-center gap-2 bg-black text-white p-2 rounded-md hover:bg-orange-400 transition-colors"
+                className="flex items-center w-40 gap-2 bg-black text-white p-2 rounded-md hover:bg-orange-400 transition-colors"
              >
                 <LinkIcon size={18} />
                 {copied ? "Link Copied!" : "Copy Store Link"}
