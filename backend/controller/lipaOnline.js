@@ -91,7 +91,7 @@ export const lipaOnline = async (req, res) => {
         const passkey = process.env.PASS_KEY;
         const password = generatePassword(shortCode, passkey, timestamp);
 
-        // building the callback URL using ngro for local testing
+        // building the callback URL using ngrok for local testing
        /*  const ngorkUrl = getNgrokUrl();
          if (ngorkUrl) {
             console.log('Using ngrok URL for callback:', ngorkUrl);

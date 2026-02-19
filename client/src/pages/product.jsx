@@ -172,9 +172,15 @@ const Product = () => {
                     }, 5000);
                 } else if (attempts < maxAttempts) {
                     setTimeout(checkStatus, 5000); // Check every 5 seconds
-                }
+                } 
             } catch (error) {
-                if (attempts < maxAttempts) {
+                // if error occurs during polling, we should stop polling and show an error message
+                if (attempts >= maxAttempts) {
+                    setPaymentResult({
+                        status: 'error',
+                        message: 'Payment status check timed out. Please contact support.'
+                    });
+                } else {
                     setTimeout(checkStatus, 5000);
                 }
             }

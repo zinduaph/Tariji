@@ -11,7 +11,7 @@ const DemoPage = () => {
         _id: "demo-product-001",
         name: "Ultimate Digital Marketing Guide",
         description: "A comprehensive e-book covering SEO, social media marketing, email campaigns, and content strategy. Learn proven strategies that have generated over $1M in sales.",
-        price: 49.99,
+        price: 500 ,
         image: ["https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&h=400&fit=crop"],
         productType: "ebook",
         downloadUrl: "#",
@@ -98,8 +98,8 @@ const DemoPage = () => {
 
                         {/* Price */}
                         <div className="mb-6">
-                            <span className="text-4xl font-bold text-orange-500">${demoProduct.price}</span>
-                            <span className="text-gray-500 line-through ml-4 text-lg">$99.99</span>
+                            <span className="text-4xl font-bold text-orange-500">${demoProduct.price}KES</span>
+                            <span className="text-gray-500 line-through ml-4 text-lg">750 KES</span>
                             <span className="text-green-400 ml-2 text-sm">50% OFF</span>
                         </div>
 

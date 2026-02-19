@@ -27,7 +27,7 @@ const Preview = () => {
                  <Share2Icon className="w-10 h-8 p-2 rounded-md inline-flex justify-center bg-orange-500"/>
               </div>
                 <h2 className="text-gray-400 text-2xl">Easy sharing</h2>
-                <h1 className="text-white font-semibold">Share your products with friends and family</h1>
+                <h1 className="text-white font-semibold">Add your store link to all you social media platforms</h1>
             </div>
         </div>
 
