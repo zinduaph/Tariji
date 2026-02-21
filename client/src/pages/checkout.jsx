@@ -305,7 +305,7 @@ const CheckoutPage = () => {
                         {cartItems.map((item) => (
                             <div key={item.id || item._id} className="md:flex md:justify-between md:w-full flex flex-col gap-4 p-4 items-center border-b py-4">
                                 <div className="flex gap-4 md:gap-10 items-center">
-                                    <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded" />
+                                    <img src={item.image} alt={item.name} loading="lazy" className="w-20 h-20 object-cover rounded" />
                                     <div>
                                         <p className="font-semibold">{item.name}</p>
                                         <p className="text-gray-600">Price: {currency}{item.price.toFixed(2)}</p>

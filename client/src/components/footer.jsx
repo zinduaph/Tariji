@@ -1,5 +1,5 @@
 
-import logo from '../assets/Tariji-removebg-preview.png';
+import logo from '../assets/Tariji-removebg-preview.webp';
 
 export default function Footer() {
     return (
@@ -15,7 +15,7 @@ export default function Footer() {
             <footer className=" flex-wrap justify-center lg:justify-between overflow-hidden gap-10 md:gap-20 py-16 px-6 md:px-16 lg:px-24 xl:px-32 text-[13px] text-gray-500 bg-black">
                 <div className="flex flex-col md:flex-row flex-wrap items-start gap-10 md:gap-[60px] xl:gap-[140px]">
                     <a href="/">
-                        <img src={logo} className='w-34' alt="" />
+                        <img src={logo} alt="Tariji Logo" width={70} height={70} className='object-contain' />
                     </a>
                    <div className='flex flex-col md:flex-row gap-10 md:gap-13'>
                      <div>

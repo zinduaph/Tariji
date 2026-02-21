@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext } from "react";
-import logo from '../assets/Tariji-removebg-preview.png';
+import logo from '../assets/Tariji-removebg-preview.webp';
 import { Link, useNavigate } from "react-router-dom";
 import {  ShoppingBasketIcon, LayoutDashboard, FileText, Package, User } from "lucide-react";
 import { shopContext } from "../context/shopContext";
@@ -45,7 +45,7 @@ const Navbar = () => {
 
                 {/* Logo */}
                 <a href="/" className="flex items-center gap-2">
-                    <img src={logo} alt="Logo" className=" w-8 md:h-10 md:w-20 md:h-10 object-contain" />
+                    <img src={logo}  alt="Tariji Logo" width={50} height={50} className="  object-contain" />
                 </a>
 
                 {/* Desktop Nav */}

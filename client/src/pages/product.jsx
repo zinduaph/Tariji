@@ -200,7 +200,7 @@ const Product = () => {
             <div className='mt-20'>
                 <div className='flex flex-col md:flex-row gap-4 w-70 md:w-220 mx-auto p-4'>
                     <div className="flex-1">
-                        <img src={image} alt={product.name} className="w-full max-w-md m-auto rounded-lg shadow-lg" />
+                        <img src={image} alt={product.name} loading='lazy' className="w-full max-w-md m-auto rounded-lg shadow-lg" />
                     </div>
                     <div className='flex flex-col mt-10 gap-3 flex-1'>
                         <div className='flex gap-6 items-center items-center'>

@@ -21,11 +21,11 @@ const productItem = ({_id, id, name, image, price, description}) => {
     return (
         <>
             <div className="border border-gray-300 w-64  rounded-md p-4">
-                <img src={image} alt={name} className="w-full h-48 object-cover rounded-md" />
+                <img src={image} loading="lazy" alt={name} className="w-full h-48 object-cover rounded-md" />
                 <h2 className="font-bold text-lg mt-2">{name}</h2>
                 <p className="text-gray-600 mt-1">Price: ${price}</p>
                 <p className="text-gray-700 mt-2">{description}</p>
-                <button onClick={handleAddToCart} className="bg-blue-500 text-white px-4 py-2 rounded mt-2">Add to Cart</button>
+        
             </div>
         </>
     )
