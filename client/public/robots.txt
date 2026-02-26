@@ -1,0 +1,12 @@
+
+
+User-agent: *
+Allow: /
+
+# Disallow admin/backend routes
+Disallow: /api/
+Disallow: /admin/
+Disallow: /backend/
+
+# Sitemap location
+Sitemap: https://tariji.co.ke/sitemap.xml

@@ -36,7 +36,8 @@ function App() {
      <Routes>
       
       {/** User Router */}
-      <Route element={<PrivateRoutes/>} >
+      <main >
+       <Route element={<PrivateRoutes/>} >
         <Route path='/' element={<Home />} />
       <Route path='/login' element={< Login/>} />
       <Route path='/form' element={<Form />}/>
@@ -52,10 +53,14 @@ function App() {
        <Route path='/about' element={<About />} />
        
       </Route>
-
+      </main>
+      
+      <main>
        <Route path='/store/:vendorId' element={<StoreFront />}/>
        <Route path='/product/:productId' element={<Product />} />
        <Route path='/checkout' element={<CheckoutPage />} />
+       
+      </main>
        
        
        

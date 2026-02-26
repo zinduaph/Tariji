@@ -10,7 +10,7 @@ const Hero = () => {
         
         <>
         <div className=" flex flex-col ml-3 justify-center mt-10 items-center pt-10 ">
-            <h1 className="border text-center  border-gray-300 w-80 md:w-100 p-2 rounded-full text-gray-500">sell your digital products in seconds</h1>
+            <h1 className="border text-center  border-gray-300 w-80 md:w-100 p-2 rounded-full text-gray-400">sell your digital products in seconds</h1>
             <h2 className="ml-4 mt-10 md:text-6xl text-4xl font-semibold text-white">Turn your <span className="text-orange-500">creations</span> into <span className="text-orange-500">cash</span></h2>
 
             <h2 className="text-gray-400 mt-10 text-2xl ">upload your digital products, set your price and share your unique link <br /> start earning from your e-book, 
