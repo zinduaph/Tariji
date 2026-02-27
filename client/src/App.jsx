@@ -33,10 +33,11 @@ function App() {
     <>
     <Toaster/>
    
-     <Routes>
+     <main>
+      <Routes>
       
       {/** User Router */}
-      <main >
+      
        <Route element={<PrivateRoutes/>} >
         <Route path='/' element={<Home />} />
       <Route path='/login' element={< Login/>} />
@@ -53,19 +54,20 @@ function App() {
        <Route path='/about' element={<About />} />
        
       </Route>
-      </main>
       
-      <main>
+      
+      
        <Route path='/store/:vendorId' element={<StoreFront />}/>
        <Route path='/product/:productId' element={<Product />} />
        <Route path='/checkout' element={<CheckoutPage />} />
        
-      </main>
+      
        
        
        
      </Routes>
    
+     </main>
     </>
   )
 }
