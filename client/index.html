@@ -12,19 +12,140 @@
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://tariji.com/" />
+<meta property="og:url" content="https://tariji.co.ke/" />
 <meta property="og:title" content="Tariji - Your Number One Digital Selling Platform" />
 <meta property="og:description" content="Easily set up your online store, sell products, and manage payments with integrated M-Pesa support. Start selling today!" />
 <meta property="og:image" content="/Tariji.png" />
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content="https://tariji.com/" />
+<meta property="twitter:url" content="https://tariji.co.ke/" />
 <meta property="twitter:title" content="Tariji - Your Number One Digital Selling Platform" />
 <meta property="twitter:description" content="Easily set up your online store, sell products, and manage payments with integrated M-Pesa support. Start selling today!" />
 <meta property="twitter:image" content="/Tariji.png" />
 
     <title>Tariji - Your number one digital selling platform</title>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://tariji.co.ke/#organization",
+          "name": "Tariji",
+          "url": "https://tariji.co.ke",
+          "logo": "https://tariji.co.ke/Tariji.png",
+          "description": "Tariji is your premier digital selling platform. Easily set up your online store, sell products, and manage payments with integrated M-Pesa support.",
+          "sameAs": [
+            "https://facebook.com/tariji",
+            "https://twitter.com/tariji",
+            "https://instagram.com/tariji"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://tariji.co.ke/#website",
+          "url": "https://tariji.co.ke",
+          "name": "Tariji",
+          "publisher": {
+            "@id": "https://tariji.co.ke/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://tariji.co.ke/store/{search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://tariji.co.ke/#website",
+          "url": "https://tariji.co.ke",
+          "name": "Tariji - Digital Marketplace",
+          "description": "E-commerce platform with M-Pesa payment integration for Kenyan merchants"
+        },
+        {
+          "@type": "LocalBusiness",
+          "@id": "https://tariji.co.ke/#business",
+          "name": "Tariji",
+          "url": "https://tariji.co.ke",
+          "description": "Digital selling platform serving Kenya",
+          "areaServed": {
+            "@type": "Country",
+            "name": "Kenya"
+          },
+          "currenciesAccepted": "KES",
+          "paymentAccepted": "M-Pesa, Credit Card, Debit Card"
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://tariji.co.ke/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How do I create an online store on Tariji?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Simply sign up on Tariji, complete your profile, and start adding products to your store. You can customize your storefront and share your unique URL with customers."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I receive payments on Tariji?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Tariji integrates with M-Pesa for seamless mobile money payments in Kenya. Customers can pay directly through their phones."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is Tariji free to use?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Tariji offers free and paid plans. Visit our pricing page to see the features included in each plan."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I sell digital products on Tariji?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes! Tariji supports both physical and digital products. You can sell digital downloads, ebooks, courses, and more."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://tariji.co.ke/#breadcrumbs",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://tariji.co.ke/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Pricing",
+              "item": "https://tariji.co.ke/pricing"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Contact",
+              "item": "https://tariji.co.ke/contact"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
