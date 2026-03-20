@@ -136,7 +136,7 @@ const ResetPassword = () => {
 
     return (
         <div className="min-h-screen bg-black flex items-center justify-center px-4 pt-20 md:pt-24">
-            <div className="max-w-md mt-23 md:mt-26 w-full">
+            <div className="max-w-md mt-23 md:mt-15 w-full">
                 {/* Header */}
                 <div className="text-center mb-8">
                     <h1 className="text-3xl md:text-4xl font-bold text-white">

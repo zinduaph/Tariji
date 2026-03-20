@@ -79,7 +79,7 @@ const Login = () => {
       <div className="flex justify-center pt-28 md:pt-24 px-4 min-h-screen">
           <form
             
-            className="w-80 md:w-100 text-center  bg-gray-900 border border-gray-800 rounded-2xl px-8">
+            className="w-80 md:w-90 text-center mt-8 bg-gray-900 border border-gray-800 rounded-2xl px-8">
            
 
             <div className="flex items-center mt-4">
