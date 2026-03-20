@@ -286,7 +286,7 @@ const CheckoutPage = () => {
     };
 
     return (
-        <div className="container mt-13 md:mt-19 mx-auto p-4 max-w-4xl">
+        <div className="container mt-20 md:mt-19 mx-auto p-4 max-w-4xl">
             <h1 className="text-3xl font-bold mb-6">Checkout <span className="text-orange-500">page</span></h1>
             
             {isLoading ? (

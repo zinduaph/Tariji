@@ -95,7 +95,7 @@ const Dashbord = () => {
     
     return (
         <>
-        <div className="mt-15 md:mt-19">
+        <div className="mt-24 md:mt-20">
 
            <div className="flex flex-col md:flex-row p-5 items-center gap-20  md:gap-40">
             <div className="border border-gray-500 flex flex-col justify-center items-center gap-3 p-4 shadow-md w-40 md:w-60 rounded-md">

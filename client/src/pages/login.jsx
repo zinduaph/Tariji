@@ -28,6 +28,7 @@ const Login = () => {
         try {
             if(state === 'login') {
                 const response = await axios.post(backendUrl+'/api/user/login',{email: formData.email, password: formData.password})
+                
                 if(response.data.success) {
                     navigate('/yourpage')
                     setToken(response.data.token)
@@ -75,7 +76,7 @@ const Login = () => {
     }
 
     return (
-      <div className="flex justify-center mt-20 md:mt-24 items-center">
+      <div className="flex justify-center pt-28 md:pt-24 px-4 min-h-screen">
           <form
             
             className="w-80 md:w-100 text-center  bg-gray-900 border border-gray-800 rounded-2xl px-8">

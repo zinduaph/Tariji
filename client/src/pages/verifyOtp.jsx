@@ -87,7 +87,7 @@ const VerifyOtp = () => {
     };
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center px-4">
+        <div className="min-h-screen bg-black flex items-center justify-center px-4 pt-20 md:pt-24">
             <div className="max-w-md w-full">
                 {/* Logo/Header */}
                 <div className="text-center mb-8">

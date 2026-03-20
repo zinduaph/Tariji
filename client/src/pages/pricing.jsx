@@ -91,11 +91,11 @@ const Pricing = () => {
                     }
                 });
             } else {
-                toast.error(response.data.message || 'Failed to initiate payment');
+              toast.error(response.data.message || 'Failed to initiate payment');
             }
-        } catch (error) {
-            console.error(error);
-            toast.error(error.response?.data?.message || 'Failed to process subscription');
+        } catch (error) {                
+            error(error);
+            toast.error(error.response?.data?.message || 'Fconsoleailed to process subscription');
         } finally {
             setLoading(null);
         }
@@ -139,7 +139,7 @@ const Pricing = () => {
         }
     ];
     return (
-        <div className="min-h-screen bg-black mt-10 md:mt-15 text-white py-16 px-4">
+        <div className="min-h-screen bg-black mt-20 md:mt-15 text-white py-16 px-4">
             <div className="container mx-auto">
                 <h1 className="text-5xl font-bold text-center mb-4 text-orange-500">Choose Your Plan</h1>
                 <p className="text-xl text-center mb-16 text-gray-300">Start selling online with our flexible pricing options</p>

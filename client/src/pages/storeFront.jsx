@@ -57,7 +57,7 @@ const StoreFront = () => {
 
     if (loading) {
         return (
-            <div className="mt-20 text-center">
+            <div className="mt-24 text-center">
                 <p className="text-xl">Loading store...</p>
             </div>
         );
@@ -65,7 +65,7 @@ const StoreFront = () => {
 
     if (products.length === 0) {
         return (
-            <div className="mt-20 text-center">
+            <div className="mt-24 text-center">
                 <p className="text-xl text-gray-500">This store has no products yet.</p>
                 
             </div>
@@ -73,7 +73,7 @@ const StoreFront = () => {
     }
 
     return (
-        <div className="mt-20 p-4 md:p-8">
+        <div className="mt-24 p-4 md:p-8">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <div>

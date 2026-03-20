@@ -97,7 +97,7 @@ export const lipaOnline = async (req, res) => {
             console.log('Using ngrok URL for callback:', ngorkUrl);
          }*/
          const callbackPath = '/api/payment/lipa-online/callback';
-         const callbackURL = `${process.env.BACKEND_URL}${callbackPath}`;
+         const callbackURL = `${'https://anya-nonstable-jared.ngrok-free.dev'}${callbackPath}`;
 
         const stkPushRequest = {
             BusinessShortCode: shortCode,
