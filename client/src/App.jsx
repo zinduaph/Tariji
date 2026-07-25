@@ -26,6 +26,7 @@ import DemoPage from './pages/demoPage'
 import VerifyOtp from './pages/verifyOtp'
 import ResetPassword from './pages/resetPassword'
 import PrivateRoutes from './pages/private'
+import Kra from './blog/kra-tax-digital-products'
 function App() {
    
 
@@ -52,6 +53,7 @@ function App() {
        <Route path='/payment-status' element={<PaymentStatus/>}/>
        <Route path='/dashboard' element={<Dashbord/>}/>
        <Route path='/about' element={<About />} />
+       <Route path='/kra-tax-digital-products' element={<Kra/>} />
        
       </Route>
       
