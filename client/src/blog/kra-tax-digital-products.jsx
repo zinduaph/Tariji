@@ -14,7 +14,7 @@ const Kra = () => {
               </p>
 
               <p className="text-gray-800 text-lg leading-relaxed mb-4 italic">
-                 Last updated: 2026 | Reading time: 31 minutes
+                 Last updated: 2026 | Reading time: 3 minutes
                 </p>
 
                 <hr className="my-8" />
