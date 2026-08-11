@@ -27,6 +27,7 @@ import VerifyOtp from './pages/verifyOtp'
 import ResetPassword from './pages/resetPassword'
 import PrivateRoutes from './pages/private'
 import Kra from './blog/kra-tax-digital-products'
+import SideHustleForCampusStudents from './blog/side-hustle-for-campus-students'
 import DigitalSideHustle from './blog/digital-side-hustle-for-civilServernts-and-teachers'
 function App() {
    
@@ -56,6 +57,7 @@ function App() {
        <Route path='/about' element={<About />} />
        <Route path='/kra-tax-digital-products' element={<Kra/>} />
        <Route path='/digital-side-hustle-for-civilServernts-and-teachers' element={<DigitalSideHustle/>} />
+       <Route path='/side-hustle-for-campus-students' element={<SideHustleForCampusStudents/>} />
 
        
       </Route>
