@@ -62,6 +62,37 @@ const CheckoutPage = () => {
     });
     const [isProcessing, setIsProcessing] = useState(false);
     const [paymentResult, setPaymentResult] = useState(null);
+    const paystackReference = new URLSearchParams(window.location.search).get('reference');
+
+    useEffect(() => {
+        if (!paystackReference) return;
+
+        const confirmPayment = async () => {
+            try {
+                const response = await fetch(
+                    `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/payment/paystack/verify/${paystackReference}`
+                );
+                const data = await response.json();
+
+                if (data.success && data.paymentStatus === 'completed') {
+                    setPaymentResult({
+                        status: 'success',
+                        message: 'Payment successful! Your products will be delivered to your email.'
+                    });
+                    toast.success('Payment received! Check your email for your products.');
+                    cartItems.forEach(item => removeFromCart(item.id || item._id));
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else {
+                    setPaymentResult({ status: 'error', message: 'Payment was not completed.' });
+                }
+            } catch (error) {
+                console.error('Paystack confirmation error:', error);
+                setPaymentResult({ status: 'error', message: 'Unable to confirm payment.' });
+            }
+        };
+
+        confirmPayment();
+    }, [paystackReference, cartItems, removeFromCart]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -73,14 +104,10 @@ const CheckoutPage = () => {
         setPaymentResult(null);
     };
 
-    // M-Pesa payment integration for cart checkout
+    // Initialize Paystack checkout on the backend.
     const handlePlaceOrder = async () => {
-        if (!formData.name || !formData.email || !formData.phone) {
+        if (!formData.name || !formData.email) {
             toast.error('Please fill in all required fields');
-            return;
-        }
-        if (!formData.phone.startsWith('07') && !formData.phone.startsWith('254')) {
-            toast.error('Please enter a valid Kenyan phone number');
             return;
         }
 
@@ -100,7 +127,7 @@ const CheckoutPage = () => {
             }));
             
             const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/payment/lipa-online`,
+                `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/payment/paystack`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -121,11 +148,11 @@ const CheckoutPage = () => {
             if (data.success) {
                 setPaymentResult({
                     status: 'pending',
-                    message: 'Please check your phone and enter your M-Pesa PIN',
-                    paymentId: data.paymentId
+                        message: 'Redirecting to secure Paystack checkout...',
+                        paymentId: data.paymentId,
+                        reference: data.reference
                 });
-                toast.success('M-Pesa prompt sent! Check your phone.');
-                pollPaymentStatus(data.paymentId);
+                window.location.assign(data.authorizationUrl);
             } else {
                 setPaymentResult({
                     status: 'error',
@@ -143,44 +170,6 @@ const CheckoutPage = () => {
         } finally {
             setIsProcessing(false);
         }
-    };
-
-    // Poll payment status
-    const pollPaymentStatus = async (paymentId) => {
-        const maxAttempts = 30;
-        let attempts = 0;
-
-        const checkStatus = async () => {
-            attempts++;
-            try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/payment/lipa-online/status/${paymentId}`
-                );
-                const data = await response.json();
-
-                if (data.success && data.paymentStatus === 'completed') {
-                    setPaymentResult({
-                        status: 'success',
-                        message: 'Payment successful! Your products will be delivered to your email.',
-                        mpesaReceipt: data.mpesaReceipt
-                    });
-                    toast.success('Payment received! Check your email for your products.');
-                    // Clear cart after successful payment
-                    setTimeout(() => {
-                        setShowPlaceOrderModal(false);
-                        cartItems.forEach(item => removeFromCart(item.id || item._id));
-                    }, 5000);
-                } else if (attempts < maxAttempts) {
-                    setTimeout(checkStatus, 5000);
-                }
-            } catch (error) {
-                if (attempts < maxAttempts) {
-                    setTimeout(checkStatus, 5000);
-                }
-            }
-        };
-
-        setTimeout(checkStatus, 5000);
     };
 
     const Modal = ({ onOpen, onClose }) => {
@@ -275,7 +264,7 @@ const CheckoutPage = () => {
                                         Processing...
                                     </>
                                 ) : (
-                                    'Pay with M-Pesa'
+                                    'Pay with Paystack'
                                 )}
                             </button>
                         </div>
@@ -346,7 +335,7 @@ const CheckoutPage = () => {
                             onClick={handlePlaceOrderClick}
                             className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 transition-colors text-lg font-semibold"
                         >
-                            Pay with M-Pesa
+                            Pay with Paystack
                         </button>
                     </div>
                 </>

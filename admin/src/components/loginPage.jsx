@@ -5,10 +5,12 @@ import { Lock, Mail } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { backendUrl } from '../App';
+import { useNavigate } from 'react-router-dom';
 
 const loginPage = ({setToken}) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('')
+    const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -16,6 +18,7 @@ const loginPage = ({setToken}) => {
            const response  = await axios.post(backendUrl + '/api/user/admin', {email,password})
            if(response.data.success){
             setToken(response.data.token)
+            navigate('/users')
             toast.success('login successful')
             console.log(response.data.token)
 

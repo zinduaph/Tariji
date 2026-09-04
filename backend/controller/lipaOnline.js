@@ -4,6 +4,7 @@ import orderModel from '../model/order.js'
 import productModel from '../model/product.js'
 import { getNgrokUrl } from '../utils/ngrok-config.js';
 import { sendEmail } from '../config/nodemailer.js';
+import crypto from 'crypto';
 
 
 // Get M-Pesa Access Token
@@ -45,8 +46,154 @@ const generatePassword = (shortCode, passkey, timestamp) => {
     return Buffer.from(shortCode + passkey + timestamp).toString('base64');
 };
 
+const fulfillPaystackCartPayment = async (paymentRecord, transaction) => {
+    if (paymentRecord.paymentStatus === 'completed') return;
+
+    const cartItems = paymentRecord.cartItems || [];
+    let sellerId = null;
+    if (cartItems[0]?.productId) {
+        const product = await productModel.findById(cartItems[0].productId);
+        sellerId = product?.userId || null;
+    }
+
+    const order = await orderModel.create({
+        items: cartItems.map(item => ({
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            price: item.price
+        })),
+        amount: paymentRecord.amount,
+        address: {
+            fullName: paymentRecord.fullName,
+            email: paymentRecord.email,
+            phone: paymentRecord.phone
+        },
+        status: 'order placed',
+        paymentMethod: 'paystack',
+        payment: true,
+        deliveryStatus: 'processing',
+        buyerEmail: paymentRecord.email,
+        sellerId
+    });
+
+    let downloadLinksHtml = '';
+    for (const item of cartItems) {
+        const product = await productModel.findById(item.productId);
+        downloadLinksHtml += product?.downloadUrl
+            ? `<div style="margin: 10px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;"><strong>${item.productName}</strong><br/><a href="${product.downloadUrl}" style="color: #e67e22; font-weight: bold;">Click here to download your product</a></div>`
+            : `<div style="margin: 10px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;"><strong>${item.productName}</strong><br/><span style="color: #666;">Download link not available</span></div>`;
+    }
+
+    await sendEmail(
+        paymentRecord.email,
+        'Payment Confirmation - Your Download Links',
+        `Dear ${paymentRecord.fullName},\n\nYour payment of KES ${paymentRecord.amount} has been received.\n\nThank you for shopping with Tariji!`,
+        `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;"><h2 style="color: #e67e22;">Payment Confirmed!</h2><p>Dear ${paymentRecord.fullName},</p><p>Your Paystack payment of <strong>KES ${paymentRecord.amount}</strong> has been received.</p><h3>Your Products:</h3>${downloadLinksHtml}<p>Order ID: ${order._id}</p><p>Paystack reference: ${transaction.reference}</p><p>Thank you for shopping with Tariji!</p></div>`
+    );
+
+    paymentRecord.paystackTransactionId = String(transaction.id);
+    paymentRecord.transactionId = transaction.reference;
+    paymentRecord.paymentStatus = 'completed';
+    await paymentRecord.save();
+};
+
+export const initializePaystackCheckout = async (req, res) => {
+    const { fullName, email, address, phone, amount, productName, cartItems } = req.body;
+    try {
+        if (!fullName || !email || !amount || !productName || !Array.isArray(cartItems) || cartItems.length === 0) {
+            return res.status(400).json({ success: false, message: 'Please provide customer and cart details' });
+        }
+        if (!process.env.PAYSTACK_SECRET_KEY) {
+            return res.status(500).json({ success: false, message: 'Paystack is not configured on the server' });
+        }
+
+        const paymentRecord = await lipaNaMpesaModel.create({
+            productName,
+            fullName,
+            email,
+            phone: phone || 'N/A',
+            amount: Number(amount),
+            paymentProvider: 'paystack',
+            paymentStatus: 'pending',
+            cartItems
+        });
+        const reference = `ORDER-${paymentRecord._id}-${Date.now()}`;
+        paymentRecord.paystackReference = reference;
+        await paymentRecord.save();
+
+        const response = await axios.post('https://api.paystack.co/transaction/initialize', {
+            email,
+            amount: Math.round(Number(amount) * 100),
+            currency: 'KES',
+            reference,
+            callback_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/checkout?reference=${reference}`,
+            metadata: { paymentId: paymentRecord._id.toString(), productName }
+        }, {
+            headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }
+        });
+
+        return res.json({
+            success: true,
+            paymentId: paymentRecord._id,
+            reference,
+            authorizationUrl: response.data.data.authorization_url
+        });
+    } catch (error) {
+        console.error('Paystack cart initialization error:', error.response?.data || error.message);
+        return res.status(500).json({ success: false, message: 'Unable to initialize Paystack checkout' });
+    }
+};
+
+const confirmPaystackCartPayment = async (reference) => {
+    const paymentRecord = await lipaNaMpesaModel.findOne({ paystackReference: reference });
+    if (!paymentRecord) throw new Error('Payment record not found');
+
+    const response = await axios.get(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+        headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }
+    });
+    const transaction = response.data.data;
+    if (transaction.status !== 'success' || transaction.currency !== 'KES' || transaction.amount !== Math.round(paymentRecord.amount * 100)) {
+        return paymentRecord;
+    }
+    await fulfillPaystackCartPayment(paymentRecord, transaction);
+    return paymentRecord;
+};
+
+export const verifyPaystackCheckout = async (req, res) => {
+    try {
+        const payment = await confirmPaystackCartPayment(req.params.reference);
+        return res.json({ success: true, paymentStatus: payment.paymentStatus });
+    } catch (error) {
+        console.error('Paystack cart verification error:', error.response?.data || error.message);
+        return res.status(502).json({ success: false, message: 'Unable to verify Paystack payment' });
+    }
+};
+
+export const paystackCartWebhook = async (req, res) => {
+    const signature = req.headers['x-paystack-signature'];
+    const expectedSignature = crypto.createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
+        .update(req.rawBody || JSON.stringify(req.body)).digest('hex');
+    if (!signature || signature !== expectedSignature) return res.sendStatus(401);
+
+    try {
+        if (req.body.event === 'charge.success') {
+            await confirmPaystackCartPayment(req.body.data.reference);
+        }
+        return res.sendStatus(200);
+    } catch (error) {
+        console.error('Paystack cart webhook error:', error);
+        return res.sendStatus(500);
+    }
+};
+
 // Main payment endpoint - no auth required
 export const lipaOnline = async (req, res) => {
+    return res.status(410).json({
+        success: false,
+        message: 'M-Pesa checkout is disabled. Use the Paystack checkout endpoint.'
+    });
+
     const { fullName, email, address, phone, amount, productName, cartItems } = req.body
     
     try {

@@ -10,6 +10,7 @@ const PaymentStatus = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { subscriptionId, planType } = location.state || {};
+    const reference = new URLSearchParams(location.search).get('reference');
     
     const{backendUrl,token} = useContext(shopContext)
     //const token = localStorage.getItem('token');
@@ -18,7 +19,7 @@ const PaymentStatus = () => {
     const [countdown, setCountdown] = useState(60); // 1 minute
 
     useEffect(() => {
-        if (!subscriptionId) {
+        if (!subscriptionId && !reference) {
             navigate('/pricing');
             return;
         }
@@ -27,7 +28,9 @@ const PaymentStatus = () => {
         const pollInterval = setInterval(async () => {
             try {
                 const response = await axios.get(
-                    `${backendUrl}/api/subscription/status/${subscriptionId}`,
+                    reference
+                        ? `${backendUrl}/api/subscription/paystack/verify/${reference}`
+                        : `${backendUrl}/api/subscription/status/${subscriptionId}`,
                     {
                         headers: { Authorization: `Bearer ${token}` }
                     }
@@ -65,7 +68,7 @@ const PaymentStatus = () => {
             clearInterval(pollInterval);
             clearInterval(countdownInterval);
         };
-    }, [subscriptionId]);
+    }, [subscriptionId, reference, backendUrl, token, navigate]);
 
     return (
         <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -77,7 +80,7 @@ const PaymentStatus = () => {
                             Waiting for Payment...
                         </h2>
                         <p className="text-gray-400 mb-4">
-                            Please check your phone and enter your M-Pesa PIN
+                            Complete the payment in the Paystack checkout window
                         </p>
                         <p className="text-orange-500 text-sm">
                             Time remaining: {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}

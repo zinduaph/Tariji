@@ -15,15 +15,23 @@ const transporter = nodemailer.createTransport({
 // Helper function to send emails easily
 export const sendEmail = async (to, subject, text, html = null) => {
     try {
+        const mail = typeof to === 'object' && to !== null
+            ? to
+            : { to, subject, text, html };
+
+        if (!mail.to) {
+            throw new Error('Email recipient is missing');
+        }
+
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
-            to: to,
-            subject: subject,
-            text: text,
-            html: html || text
+            to: mail.to,
+            subject: mail.subject,
+            text: mail.text || '',
+            html: mail.html || mail.text || ''
         };
         await transporter.sendMail(mailOptions);
-        console.log(`Email sent to ${to}: ${subject}`);
+        console.log(`Email sent to ${mail.to}: ${mail.subject}`);
     } catch (error) {
         console.error('Error sending email:', error);
     }

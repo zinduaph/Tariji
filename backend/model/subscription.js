@@ -8,6 +8,9 @@ const subscriptionSchema = new mongoose.Schema({
         type: String, 
         enum: ['pending_payment', 'active', 'expired', 'cancelled', 'payment_failed'], 
         default: 'pending_payment' },
+        paymentProvider: { type: String, enum: ['mpesa', 'paystack'], default: 'mpesa' },
+        paystackReference: { type: String, unique: true, sparse: true },
+        paystackTransactionId: { type: String },
         // M-Pesa details
     mpesaReceipt: { type: String },
     checkoutRequestId: { type: String },
@@ -22,7 +25,7 @@ const subscriptionSchema = new mongoose.Schema({
     // Metadata
     isRenewal: { type: Boolean, default: false },
     previousSubscriptionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subscription' }
-},[])
+}, { timestamps: true })
 const subscriptionModel = mongoose.model('subscription', subscriptionSchema)
 
 export default subscriptionModel;

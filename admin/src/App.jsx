@@ -7,6 +7,7 @@ import UserProducts from './components/userProducts'
 import {Toaster} from 'react-hot-toast'
 import { DollarSignIcon } from 'lucide-react'
 import Sidebar from './components/sideBar'
+import SendEmail from './components/sendEmail'
 export const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 function App() {
   
@@ -51,6 +52,7 @@ function App() {
                     <Routes>
                       <Route path='/users' element={<Users token={token} />} />
                       <Route path='/userProducts/:userId' element={<UserProducts token={token} />} />
+                      <Route path='/send-email' element={<SendEmail token={token} />} />
                       <Route path='/' element={<Users token={token} />} />
                     </Routes>
                   </section>

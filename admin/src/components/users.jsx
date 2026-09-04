@@ -1,7 +1,7 @@
 
 
 import axios from 'axios';
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { Trash2, User, Mail, Calendar, Briefcase, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { backendUrl } from '../App';
@@ -18,7 +18,7 @@ const Users = ({ token }) => {
         try {
 
             const response = await axios.get(`${backendUrl}/api/user/users`, {
-                
+                headers: { Authorization: `Bearer ${token}` }
             });
             
             if (response.data.success) {
@@ -34,11 +34,8 @@ const Users = ({ token }) => {
             setLoading(false);
         }
     };
-
     useEffect(() => {
-        
-            fetchUsers();
-        
+        fetchUsers();
     }, [token]);
 
     // Delete user
@@ -139,6 +136,9 @@ const Users = ({ token }) => {
                                     Joined
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                    Account
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -146,7 +146,7 @@ const Users = ({ token }) => {
                         <tbody className="divide-y divide-gray-700">
                             {users.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-gray-400">
+                                    <td colSpan="7" className="px-6 py-12 text-center text-gray-400">
                                         No users found
                                     </td>
                                 </tr>
@@ -194,6 +194,11 @@ const Users = ({ token }) => {
                                                 <span className="text-sm">
                                                     {user.createdAt ? formatDate(user.createdAt) : 'N/A'}
                                                 </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-300">
+                                                {user.account?.phoneNumber || 'Not added'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

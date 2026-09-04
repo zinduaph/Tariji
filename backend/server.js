@@ -9,6 +9,7 @@ import productRouter from './routes/productRoute.js'
 import lipaOnlineRouter from './routes/lipaOnlineRoute.js'
 import router from './routes/deliveryRoute.js'
 import redisClient from './config/redis.js'
+import AccountRouter from './routes/accountRoute.js'
 
 
 
@@ -16,7 +17,13 @@ const app = express()
 const PORT = process.env.PORT || 8000
 
 // middleware
-app.use(express.json())
+app.use(express.json({
+    verify: (req, res, buffer) => {
+        if (req.originalUrl.includes('/paystack/webhook')) {
+            req.rawBody = buffer;
+        }
+    }
+}))
 app.use(cors())
 connectDB()
 connectCloudinary()
@@ -34,6 +41,7 @@ app.use('/api/product',productRouter)
 app.use('/api/subscription',subscriptionRoute)
 app.use('/api/payment', lipaOnlineRouter)
 app.use('/api/delivery', router)
+app.use('/api/account', AccountRouter)
 
 
 app.get('/', (req,res) => {

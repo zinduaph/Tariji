@@ -8,6 +8,9 @@ const lipaNaMpesaSchema = new mongoose.Schema({
     phone:{type:String,require:true},
     amount:{type:Number,require:true},
     transactionId:{type:String},
+    paymentProvider: { type: String, enum: ['mpesa', 'paystack'], default: 'mpesa' },
+    paystackReference: { type: String, unique: true, sparse: true },
+    paystackTransactionId: { type: String },
     mpesaReceipt:{type:String},
     paymentStatus:{type:String,default:'pending',enum:['pending','completed','failed']},
     cartItems: [{

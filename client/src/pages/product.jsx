@@ -71,16 +71,11 @@ const Product = () => {
         setShowBuyModal(true);
     };
 
-    // M-Pesa payment integration
-    const handleMpesaPayment = async () => {
+    // Initialize Paystack checkout on the backend.
+    const handlePaystackPayment = async () => {
         // Validate form
-        if (!formData.name || !formData.email || !formData.phone) {
+        if (!formData.name || !formData.email) {
             toast.error('Please fill in all required fields');
-            return;
-        }
-
-        if (!formData.phone.startsWith('07') && !formData.phone.startsWith('254')) {
-            toast.error('Please enter a valid Kenyan phone number');
             return;
         }
 
@@ -100,7 +95,7 @@ const Product = () => {
             }];
             
             const response = await fetch(
-                `${backendUrl}/api/payment/lipa-online`,
+                `${backendUrl}/api/payment/paystack`,
                 { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -121,13 +116,11 @@ const Product = () => {
             if (data.success) {
                 setPaymentResult({
                     status: 'pending',
-                    message: 'Please check your phone and enter your M-Pesa PIN',
-                    paymentId: data.paymentId
+                    message: 'Redirecting to secure Paystack checkout...',
+                    paymentId: data.paymentId,
+                    reference: data.reference
                 });
-                toast.success('M-Pesa prompt sent! Check your phone.');
-                
-                // Poll for payment status
-                pollPaymentStatus(data.paymentId);
+                window.location.assign(data.authorizationUrl);
             } else {
                 setPaymentResult({
                     status: 'error',
@@ -145,49 +138,6 @@ const Product = () => {
         } finally {
             setIsProcessing(false);
         }
-    };
-
-    // Poll payment status
-    const pollPaymentStatus = async (paymentId) => {
-        const maxAttempts = 30;
-        let attempts = 0;
-
-        const checkStatus = async () => {
-            attempts++;
-            try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/payment/lipa-online/status/${paymentId}`
-                );
-                const data = await response.json();
-
-                if (data.success && data.paymentStatus === 'completed') {
-                    setPaymentResult({
-                        status: 'success',
-                        message: 'Payment successful! Your product will be delivered to your email.',
-                        mpesaReceipt: data.mpesaReceipt
-                    });
-                    toast.success('Payment received! Check your email for the product.');
-                    setTimeout(() => {
-                        setShowBuyModal(false);
-                    }, 5000);
-                } else if (attempts < maxAttempts) {
-                    setTimeout(checkStatus, 5000); // Check every 5 seconds
-                } 
-            } catch (error) {
-                // if error occurs during polling, we should stop polling and show an error message
-                if (attempts >= maxAttempts) {
-                    setPaymentResult({
-                        status: 'error',
-                        message: 'Payment status check timed out. Please contact support.'
-                    });
-                } else {
-                    setTimeout(checkStatus, 5000);
-                }
-            }
-        };
-
-        // Start polling after 5 seconds (give user time to enter PIN)
-        setTimeout(checkStatus, 5000);
     };
 
 
@@ -227,11 +177,11 @@ const Product = () => {
                                 onClick={handleBuyClick} 
                                 className="bg-orange-500 text-white hover:bg-orange-600 px-6 py-3 rounded-md mt-4 transition-colors"
                             >
-                                Buy Now - Pay with M-Pesa
+                                Buy Now - Pay with Paystack
                             </button>
                         </div>
                         <p className="text-sm text-gray-500 mt-4">
-                            Digital product. Payment via M-Pesa. Product delivered instantly to your email.
+                            Digital product. Payment via Paystack. Product delivered instantly to your email.
                         </p>
                     </div>
                 </div>
@@ -289,7 +239,7 @@ const Product = () => {
                     <input
                         type="tel"
                         name="phone"
-                        placeholder="Phone Number (07XXXXXXXX) *"
+                        placeholder="Phone Number (optional)"
                         value={formData.phone}
                         onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -309,7 +259,7 @@ const Product = () => {
                         Cancel
                     </button>
                     <button
-                        onClick={handleMpesaPayment}
+                        onClick={handlePaystackPayment}
                         disabled={isProcessing || paymentResult?.status === 'success'}
                         className={`flex-1 px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 ${
                             isProcessing || paymentResult?.status === 'success'
@@ -323,7 +273,7 @@ const Product = () => {
                                 Processing...
                             </>
                         ) : (
-                            'Pay with M-Pesa'
+                            'Pay with Paystack'
                         )}
                     </button>
                 </div>

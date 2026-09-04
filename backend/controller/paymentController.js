@@ -7,6 +7,7 @@ import axios from 'axios'
 import nodemailer from 'nodemailer'
 import { getNgrokUrl } from '../utils/ngrok-config.js';
 import { sendEmail } from '../config/nodemailer.js';
+import crypto from 'crypto';
 
 const getAccessToken = async () => {
     const consumerKey = process.env.SAFARICOM_CONSUMER_KEY;
@@ -143,6 +144,79 @@ const sendSubscriptionActivatedEmail = async (user, subscription) => {
     }
 };
 
+const activatePaystackSubscription = async (subscription, transaction) => {
+    if (subscription.subscriptionStatus === 'active') return subscription;
+
+    subscription.subscriptionStatus = 'active';
+    subscription.paymentProvider = 'paystack';
+    subscription.paystackTransactionId = String(transaction.id);
+    subscription.activatedAt = new Date();
+    subscription.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await subscription.save();
+
+    const user = await userModel.findById(subscription.userId);
+    if (user) {
+        user.plan = subscription.plan;
+        user.subscriptionStatus = 'active';
+        user.subscriptionEndDate = subscription.expiresAt;
+        await user.save();
+        await sendSubscriptionActivatedEmail(user, subscription);
+    }
+
+    return subscription;
+};
+
+const initiatePaystackSubscription = async (req, res, plan, amount) => {
+    try {
+        const user = await userModel.findById(req.userId);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        const existingSub = await subscriptionModel.findOne({
+            userId: user._id,
+            subscriptionStatus: 'active'
+        });
+        if (existingSub) return res.status(400).json({ success: false, message: 'Active subscription exists' });
+
+        if (!process.env.PAYSTACK_SECRET_KEY) {
+            return res.status(500).json({ success: false, message: 'Paystack is not configured on the server' });
+        }
+
+        const subscription = await subscriptionModel.create({
+            userId: user._id,
+            plan,
+            amount,
+            paymentProvider: 'paystack',
+            subscriptionStatus: 'pending_payment'
+        });
+        const reference = `SUB-${subscription._id}-${Date.now()}`;
+        subscription.paystackReference = reference;
+        await subscription.save();
+
+        const response = await axios.post(
+            'https://api.paystack.co/transaction/initialize',
+            {
+                email: user.email,
+                amount: amount * 100,
+                currency: 'KES',
+                reference,
+                callback_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/payment-status?reference=${reference}`,
+                metadata: { subscriptionId: subscription._id.toString(), plan }
+            },
+            { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } }
+        );
+
+        return res.json({
+            success: true,
+            subscriptionId: subscription._id,
+            reference,
+            authorizationUrl: response.data.data.authorization_url
+        });
+    } catch (error) {
+        console.error('Paystack initialization error:', error.response?.data || error.message);
+        return res.status(500).json({ success: false, message: 'Unable to initialize Paystack payment' });
+    }
+};
+
 // Send subscription failed email
 
 
@@ -196,6 +270,8 @@ export const starterPlan = async (req,res) => {
 }
 
 export const  growthPlan = async (req, res) => {
+    return initiatePaystackSubscription(req, res, 'growth', 1000);
+    /*
     const userId = req.userId;
     const phoneNumber = req.body.phoneNumber
     if (!userId) {
@@ -244,10 +320,10 @@ export const  growthPlan = async (req, res) => {
         const password = Buffer.from(shortCode + passkey + timestamp).toString('base64');
         
         // building the callback url using ngrok for local testing
-      /*  const ngrokUrl = getNgrokUrl();
+    // const ngrokUrl = getNgrokUrl();
         if (ngrokUrl) {
             return res.status(500).json({ success: false, message: 'Ngrok URL not available' });
-        }*/
+        // }
         const callbackPath = '/api/subscription/callback';
         const callbackURL = `${process.env.BACKEND_URL}${callbackPath}`;
 
@@ -302,10 +378,12 @@ export const  growthPlan = async (req, res) => {
                 message: 'Failed to initiate payment. Please try again.'
             });
         }
-
-}
+        */
+    }
 
 export const proPlan = async (req,res) => {
+    return initiatePaystackSubscription(req, res, 'proPlan', 1500);
+    /*
     const userId = req.userId
     const phoneNumber = req.body.phoneNumber
       try {
@@ -396,8 +474,56 @@ export const proPlan = async (req,res) => {
  } catch (error) {
      console.log(error)
      res.json({success:false, message:'pro plan is not working'})
+     */
  }
- }
+
+export const verifyPaystackPayment = async (req, res) => {
+    try {
+        const subscription = await subscriptionModel.findOne({ paystackReference: req.params.reference, userId: req.userId });
+        if (!subscription) return res.status(404).json({ success: false, message: 'Subscription not found' });
+        if (subscription.subscriptionStatus === 'active') return res.json({ success: true, subscriptionStatus: 'active' });
+
+        const response = await axios.get(`https://api.paystack.co/transaction/verify/${encodeURIComponent(req.params.reference)}`, {
+            headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }
+        });
+        const transaction = response.data.data;
+        if (transaction.status === 'success' && transaction.amount === subscription.amount * 100 && transaction.currency === 'KES') {
+            await activatePaystackSubscription(subscription, transaction);
+            return res.json({ success: true, subscriptionStatus: 'active' });
+        }
+
+        if (['failed', 'abandoned'].includes(transaction.status)) {
+            subscription.subscriptionStatus = 'payment_failed';
+            await subscription.save();
+        }
+        return res.json({ success: true, subscriptionStatus: subscription.subscriptionStatus });
+    } catch (error) {
+        console.error('Paystack verification error:', error.response?.data || error.message);
+        return res.status(502).json({ success: false, message: 'Unable to verify payment' });
+    }
+};
+
+export const paystackWebhook = async (req, res) => {
+    const signature = req.headers['x-paystack-signature'];
+    const expectedSignature = crypto.createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
+        .update(req.rawBody || JSON.stringify(req.body)).digest('hex');
+    if (!signature || signature !== expectedSignature) return res.sendStatus(401);
+
+    try {
+        if (req.body.event === 'charge.success') {
+            const transaction = req.body.data;
+            const subscription = await subscriptionModel.findOne({ paystackReference: transaction.reference });
+            if (subscription && transaction.amount === subscription.amount * 100 && transaction.currency === 'KES') {
+                await activatePaystackSubscription(subscription, transaction);
+            }
+        }
+        return res.sendStatus(200);
+    } catch (error) {
+        console.error('Paystack webhook error:', error);
+        return res.sendStatus(500);
+    }
+};
+ 
 
 
 // M-Pesa Callback Handler for Subscriptions

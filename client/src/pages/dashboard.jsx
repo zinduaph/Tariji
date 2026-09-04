@@ -1,4 +1,4 @@
-import { DollarSign, User, Package, Mail } from "lucide-react"
+import { DollarSign, User, Package, Phone } from "lucide-react"
 import { useContext, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { shopContext } from "../context/shopContext"
@@ -12,7 +12,9 @@ const Dashbord = () => {
     const [summary, setSummary] = useState(null)
     const [loading, setLoading] = useState(false)
     const [initialLoading, setInitialLoading] = useState(true)
-    
+    const [account, setAccount] = useState('')
+    const [accountLoading, setAccountLoading] = useState(false)
+    const [accountSaving, setAccountSaving] = useState(false)
     // Check token and vendor status on mount
     useEffect(() => {
         const checkAuth = () => {
@@ -76,10 +78,53 @@ const Dashbord = () => {
 
         })
     }
+
+    const accountRequestConfig = {
+        headers: { Authorization: `Bearer ${token}` }
+    }
+
+    const getAccount = async () => {
+        try {
+            setAccountLoading(true)
+            const response = await axios.get(
+                `${backendUrl}/api/account/get-account`,
+                accountRequestConfig
+            )
+            if (response.data.success) {
+                setAccount(response.data.account?.phoneNumber?.toString() || '')
+            }
+        } catch (error) {
+            console.error('Error fetching payout account:', error)
+            toast.error('Failed to load payout phone number')
+        } finally {
+            setAccountLoading(false)
+        }
+    }
+
+    const addAccount = async (event) => {
+        event.preventDefault()
+        try {
+            setAccountSaving(true)
+            const response = await axios.post(
+                `${backendUrl}/api/account/add-account`,
+                { phoneNumber: account },
+                accountRequestConfig
+            )
+            if (response.data.success) {
+                setAccount(response.data.account.phoneNumber.toString())
+                toast.success('Payout phone number saved')
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to save payout phone number')
+        } finally {
+            setAccountSaving(false)
+        }
+    }
     
     useEffect(() => {
         if (!initialLoading && token) {
             fetchPurchases()
+            getAccount()
         }
     }, [initialLoading, token, navigate])
     
@@ -108,6 +153,34 @@ const Dashbord = () => {
             <hr className="text-orange-500 w-full"/>
             
           <h2 className="text-2xl mt-2 md:text-3xl font-semibold flex justify-center">Products sold</h2>
+
+          <section className="mt-6 mx-4 md:mx-5 max-w-xl border border-gray-300 rounded-md p-5 shadow-sm">
+            <h3 className="text-xl font-semibold flex items-center gap-2">
+                <Phone className="text-orange-500" size={22} />
+                Payout phone number
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">This M-Pesa number will receive your earnings.</p>
+            <form onSubmit={addAccount} className="mt-4 flex flex-col sm:flex-row gap-3">
+                <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={account}
+                    onChange={(event) => setAccount(event.target.value)}
+                    placeholder="e.g. 0712345678"
+                    pattern="(07|01)[0-9]{8}|254[0-9]{9}"
+                    required
+                    disabled={accountLoading || accountSaving}
+                    className="flex-1 border border-gray-400 rounded-md px-3 py-2 outline-none focus:border-orange-500"
+                />
+                <button
+                    type="submit"
+                    disabled={accountLoading || accountSaving}
+                    className="bg-orange-500 text-white rounded-md px-5 py-2 disabled:opacity-50"
+                >
+                    {accountSaving ? 'Saving...' : 'Save number'}
+                </button>
+            </form>
+          </section>
 
           <div className="mt-6 flex p-4 flex-col md:flex-row gap-8">
            <div className="bg-green-100 border border-green-400 p-4 rounded-md">

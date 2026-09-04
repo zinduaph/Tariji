@@ -7,6 +7,7 @@ import bcrypt, { compare } from "bcrypt"
 import personalModel from "../model/presonalInfo.js";
 import jwt from "jsonwebtoken"
 import transporter from "../config/nodemailer.js";
+import AccountModel from "../model/accountModel.js";
 
 const createToken = (userId) => {
     return jwt.sign({userId}, process.env.JWT_SECRET)
@@ -312,9 +313,19 @@ export const personalInfo = async (req,res) => {
 export const getAllUsers = async (req,res) => {
     try {
         
-        const users = await userModel.find({}).select('name email isVendor plan createdAt');
+        const users = await userModel.find({}).select('name email isVendor plan createdAt').lean();
+        const accounts = await AccountModel.find({
+            userId: { $in: users.map((user) => user._id) }
+        }).select('userId phoneNumber').lean();
+        const accountsByUserId = new Map(
+            accounts.map((account) => [account.userId.toString(), account])
+        );
+        const usersWithAccounts = users.map((user) => ({
+            ...user,
+            account: accountsByUserId.get(user._id.toString()) || null
+        }));
         
-        return res.json({success: true, users})
+        return res.json({success: true, users: usersWithAccounts})
     } catch (error) {
         console.error('Error fetching users:', error);
               return res.json({success:false, message: 'error fetching users'})

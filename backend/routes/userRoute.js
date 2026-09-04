@@ -1,6 +1,6 @@
 import express from 'express'
 import {getUserSoldProducts,getAllUsers,  adminLogin, login, personalInfo, register, verifyRegisterOtp, resendVerifyOtp, forgotPassword, resetPassword, resendResetOtp } from '../controller/userController.js'
-import { deleteUser } from '../controller/adminController.js'
+import { deleteUser, sendUserEmail } from '../controller/adminController.js'
 import { getAllSellerOrders } from '../controller/deliveryController.js'
 import userModel from '../model/user.js'
 import authMiddleware from '../middleware/auth.js'
@@ -16,9 +16,10 @@ Router.post('/resend-otp', resendVerifyOtp)
 Router.post('/forgot-password', forgotPassword)
 Router.post('/reset-password', resetPassword)
 Router.post('/resend-reset-otp', resendResetOtp)
-Router.get('/users',  getAllUsers)
+Router.get('/users', adminAuthMiddleware, getAllUsers)
 Router.get('/admin/sold-products/:userId', adminAuthMiddleware, getUserSoldProducts)
 Router.post('/admin', adminLogin)
+Router.post('/admin/send-email', adminAuthMiddleware, sendUserEmail)
 Router.get('/sold',getAllSellerOrders)
 Router.post('/personal', authMiddleware, personalInfo)
 Router.post('/login',loginRateLimiter,login)
