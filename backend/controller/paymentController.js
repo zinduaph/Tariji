@@ -105,6 +105,7 @@ const sendSubscriptionActivatedEmail = async (user, subscription) => {
 
         const sendMail = {
             from: process.env.SENDER_EMAIL,
+            
             to: user.email,
             subject: `✅ Payment Confirmed - ${planName} Plan Activated!`,
             html: `

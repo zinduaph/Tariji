@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
 
+
+
 // Explicit MailerSend SMTP configuration
 const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
@@ -25,6 +27,7 @@ export const sendEmail = async (to, subject, text, html = null) => {
 
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
+            tamplateID: mail.templateID,
             to: mail.to,
             subject: mail.subject,
             text: mail.text || '',

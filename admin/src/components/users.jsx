@@ -29,6 +29,11 @@ const Users = ({ token }) => {
         } catch (error) {
             console.error('Error fetching users:', error);
             console.error('Error response:', error.response);
+            if (error.response?.status === 401) {
+                localStorage.removeItem('token');
+                navigate('/login');
+                return;
+            }
             toast.error(error.response?.data?.message || 'Error fetching users');
         } finally {
             setLoading(false);
