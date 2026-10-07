@@ -1,8 +1,11 @@
+import crypto from 'crypto';
+import { v2 as cloudinary } from 'cloudinary';
 import orderModel from '../model/order.js';
 import productModel from '../model/product.js';
 import userModel from '../model/user.js';
-
 import lipaNaMpesaModel from '../model/lipaNaMpesa.js';
+import { addProductDownloadLink } from '../utils/digitalDownloads.js';
+import { sendEmail } from '../config/nodemailer.js';
 
 // Email template for digital product delivery
 const sendDigitalProductEmail = async (buyer, order, product, downloadUrl, expiresAt) => {
@@ -28,7 +31,7 @@ const sendDigitalProductEmail = async (buyer, order, product, downloadUrl, expir
                     <p><strong>Product Type:</strong> ${productTypeLabels[product.productType] || 'Digital Product'}</p>
                     <p><strong>Order ID:</strong> ${order._id}</p>
                     <p><strong>Download Link:</strong> <a href="${downloadUrl}" style="color: #2563eb;">Click here to download</a></p>
-                    <p><strong>Link Expires:</strong> ${new Date(expiresAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p><strong>Link Expires:</strong> ${new Date(expiresAt).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
                 </div>
                 
                 <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
@@ -63,9 +66,13 @@ export const sendDownloadLink = async (req, res) => {
         const sellerId = req.userId;
 
         // Find the order
-        const order = await lipaNaMpesaModel.findById(orderId);
+        const order = await orderModel.findById(orderId);
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (!order.payment) {
+            return res.status(400).json({ success: false, message: 'Download links can only be sent for paid orders' });
         }
 
         // Verify the seller owns this order
@@ -78,62 +85,43 @@ export const sendDownloadLink = async (req, res) => {
         if (!product) {
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
-
-        // Check if product is digital
-        if (!product.downloadUrl) {
-            return res.status(400).json({ success: false, message: 'This product does not have a download URL' });
+        if (
+            product.userId !== sellerId ||
+            !order.items.some(item => item.productId?.toString() === product._id.toString())
+        ) {
+            return res.status(403).json({ success: false, message: 'This product is not part of your order' });
         }
 
-        // Find the buyer (try by id first, then by email)
-        let buyerUser = null;
-        try {
-            buyerUser = await lipaNaMpesaModel.findById(order.buyerEmail);
-        } catch (e) {
-            // ignore - buyerEmail may not be an ObjectId
-        }
-        if (!buyerUser) {
-            buyerUser = await lipaNaMpesaModel.findOne({ email: order.buyerEmail });
-        }
+        const buyerUser = await userModel.findOne({ email: order.buyerEmail });
         if (!buyerUser) {
             return res.status(404).json({ success: false, message: 'Buyer not found' });
         }
 
-        // Calculate expiry date
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + (product.downloadExpiry || 7));
-
-        // Update order with download link info
-        const downloadLinkInfo = {
-            productId: product._id.toString(),
-            productName: product.name,
-            downloadUrl: product.downloadUrl,
-            expiresAt: expiresAt,
-            delivered: true,
-            deliveredAt: new Date()
-        };
-
-        // Check if already exists
-        const existingLinkIndex = order.downloadLinks.findIndex(
-            link => link.productId === productId
-        );
-
-        if (existingLinkIndex >= 0) {
-            order.downloadLinks[existingLinkIndex] = downloadLinkInfo;
-        } else {
-            order.downloadLinks.push(downloadLinkInfo);
+        if (!product.downloadPublicId || !product.downloadResourceType || !product.downloadFormat || product.productType === 'physical') {
+            return res.status(400).json({
+                success: false,
+                message: 'This product must be re-uploaded as a private digital product before it can be delivered'
+            });
         }
 
+        const downloadLinkInfo = addProductDownloadLink(order, product);
         order.deliveryStatus = 'delivered';
         order.deliverySentAt = new Date();
         await order.save();
 
         // Send email to buyer
-        await sendDigitalProductEmail(buyerUser, order, product, product.downloadUrl, expiresAt);
+        await sendDigitalProductEmail(buyerUser, order, product, downloadLinkInfo.downloadUrl, downloadLinkInfo.expiresAt);
 
         res.json({
             success: true,
             message: 'Download link sent successfully',
-            downloadLink: downloadLinkInfo
+            downloadLink: {
+                productId: downloadLinkInfo.productId,
+                productName: downloadLinkInfo.productName,
+                downloadUrl: downloadLinkInfo.downloadUrl,
+                expiresAt: downloadLinkInfo.expiresAt,
+                delivered: downloadLinkInfo.delivered
+            }
         });
 
     } catch (error) {
@@ -159,6 +147,10 @@ export const sendAllDownloadLinks = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Unauthorized access to this order' });
         }
 
+        if (!order.payment) {
+            return res.status(400).json({ success: false, message: 'Download links can only be sent for paid orders' });
+        }
+
         // Find the buyer by email
         const buyerUser = await userModel.findOne({ email: order.buyerEmail });
         if (!buyerUser) {
@@ -170,51 +162,37 @@ export const sendAllDownloadLinks = async (req, res) => {
         // Process each item in the order
         for (const item of order.items) {
             const product = await productModel.findById(item.productId);
-            
-            if (product && product.downloadUrl && product.productType !== 'physical') {
-                // Calculate expiry date
-                const expiresAt = new Date();
-                expiresAt.setDate(expiresAt.getDate() + (product.downloadExpiry || 7));
+            if (!product || product.productType === 'physical') {
+                continue;
+            }
 
-                // Update order with download link info
-                const downloadLinkInfo = {
-                    productId: product._id.toString(),
-                    productName: product.name,
-                    downloadUrl: product.downloadUrl,
-                    expiresAt: expiresAt,
-                    delivered: true,
-                    deliveredAt: new Date()
-                };
-
-                // Check if already exists
-                const existingLinkIndex = order.downloadLinks.findIndex(
-                    link => link.productId === item.productId
-                );
-
-                if (existingLinkIndex >= 0) {
-                    order.downloadLinks[existingLinkIndex] = downloadLinkInfo;
-                } else {
-                    order.downloadLinks.push(downloadLinkInfo);
-                }
-
-                // Send email
-                await sendDigitalProductEmail(buyerUser, order, product, product.downloadUrl, expiresAt);
-
+            if (!product.downloadPublicId || !product.downloadResourceType || !product.downloadFormat) {
                 deliveryResults.push({
                     productId: product._id,
                     productName: product.name,
-                    status: 'delivered'
+                    status: 'requires_private_reupload'
                 });
+                continue;
             }
+
+            const downloadLinkInfo = addProductDownloadLink(order, product);
+            await sendDigitalProductEmail(buyerUser, order, product, downloadLinkInfo.downloadUrl, downloadLinkInfo.expiresAt);
+            deliveryResults.push({
+                productId: product._id,
+                productName: product.name,
+                status: 'delivered'
+            });
         }
 
-        order.deliveryStatus = deliveryResults.length > 0 ? 'delivered' : 'pending';
+        const deliveredCount = deliveryResults.filter(result => result.status === 'delivered').length;
+        const reuploadCount = deliveryResults.filter(result => result.status === 'requires_private_reupload').length;
+        order.deliveryStatus = deliveredCount > 0 ? 'delivered' : 'pending';
         order.deliverySentAt = new Date();
         await order.save();
 
         res.json({
-            success: true,
-            message: `Delivered ${deliveryResults.length} product(s)`,
+            success: deliveredCount > 0,
+            message: `Delivered ${deliveredCount} product(s)${reuploadCount ? `; ${reuploadCount} digital product(s) require private re-upload` : ''}`,
             deliveries: deliveryResults
         });
 
@@ -285,8 +263,8 @@ export const getAllSellerOrders = async (req, res) => {
                                 price: item.price,
                                 image: item.image,
                                 productType: product.productType || 'physical',
-                                downloadUrl: product.downloadUrl || null,
-                                downloadExpiry: product.downloadExpiry || 7
+                                downloadUrl: null,
+                                downloadExpiry: product.downloadExpiry || 48
                             },
                             amount: item.price * item.quantity,
                             paymentStatus: purchase.paymentStatus,
@@ -343,6 +321,64 @@ export const getOrdersNeedingDelivery = async (req, res) => {
     }
 };
 
+export const downloadProductFile = async (req, res) => {
+    try {
+        if (!/^[a-f0-9]{64}$/i.test(req.params.token)) {
+            return res.status(404).json({ success: false, message: 'Download link is invalid or expired' });
+        }
+
+        const tokenHash = crypto.createHash('sha256').update(req.params.token).digest('hex');
+        const order = await orderModel.findOne({
+            payment: true,
+            downloadLinks: {
+                $elemMatch: {
+                    downloadTokenHash: tokenHash,
+                    expiresAt: { $gt: new Date() }
+                }
+            }
+        });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Download link is invalid or expired' });
+        }
+
+        const downloadLink = order.downloadLinks.find(link =>
+            link.downloadTokenHash === tokenHash && link.expiresAt > new Date()
+        );
+        const product = downloadLink
+            ? await productModel.findById(downloadLink.productId)
+            : null;
+
+        if (!product?.downloadPublicId || !product.downloadResourceType || !product.downloadFormat) {
+            return res.status(410).json({ success: false, message: 'This download is no longer available' });
+        }
+
+        const cloudinaryExpiry = Math.floor(Math.min(
+            Date.now() + 60 * 1000,
+            new Date(downloadLink.expiresAt).getTime()
+        ) / 1000);
+        const privateDownloadUrl = cloudinary.utils.private_download_url(
+            product.downloadPublicId,
+            product.downloadFormat,
+            {
+                resource_type: product.downloadResourceType,
+                type: 'authenticated',
+                expires_at: cloudinaryExpiry,
+                attachment: true
+            }
+        );
+
+        res.set({
+            'Cache-Control': 'no-store',
+            'Referrer-Policy': 'no-referrer'
+        });
+        return res.redirect(302, privateDownloadUrl);
+    } catch (error) {
+        console.error('Download digital product error:', error);
+        return res.status(500).json({ success: false, message: 'Unable to download this product' });
+    }
+};
+
 // Get buyer's purchased digital products
 export const getMyDigitalProducts = async (req, res) => {
     try {
@@ -359,15 +395,18 @@ export const getMyDigitalProducts = async (req, res) => {
             'downloadLinks.0': { $exists: true }
         }).sort({ date: -1 });
 
-        // Filter out expired links
+        const now = new Date();
         const activeProducts = [];
         for (const order of orders) {
-            const validLinks = order.downloadLinks.filter(link => {
-                if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
-                    return false;
-                }
-                return true;
-            });
+            const validLinks = order.downloadLinks
+                .filter(link => link.downloadTokenHash && link.expiresAt && new Date(link.expiresAt) > now)
+                .map(link => ({
+                    productId: link.productId,
+                    productName: link.productName,
+                    downloadUrl: link.downloadUrl,
+                    expiresAt: link.expiresAt,
+                    delivered: link.delivered
+                }));
 
             if (validLinks.length > 0) {
                 activeProducts.push({

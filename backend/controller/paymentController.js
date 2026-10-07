@@ -271,7 +271,7 @@ export const starterPlan = async (req,res) => {
 }
 
 export const  growthPlan = async (req, res) => {
-    return initiatePaystackSubscription(req, res, 'growth', 1000);
+    return initiatePaystackSubscription(req, res, 'growth', 250);
     /*
     const userId = req.userId;
     const phoneNumber = req.body.phoneNumber
@@ -300,7 +300,7 @@ export const  growthPlan = async (req, res) => {
 
     }
 
-    const amount = 1000 // growth plan amount
+    const amount = 250 // growth plan amount
     const formattedPhone = formatPhoneNumber(phoneNumber)
    // creating a subscription model
     const subscription = await subscriptionModel.create({
@@ -383,7 +383,7 @@ export const  growthPlan = async (req, res) => {
     }
 
 export const proPlan = async (req,res) => {
-    return initiatePaystackSubscription(req, res, 'proPlan', 1500);
+    return initiatePaystackSubscription(req, res, 'proPlan', 500);
     /*
     const userId = req.userId
     const phoneNumber = req.body.phoneNumber
@@ -400,7 +400,7 @@ export const proPlan = async (req,res) => {
          return res.json({success:false, message:'phone number is required'})
      }
 
-     const amount = 1500 // proPlan amount
+     const amount = 500 // proPlan amount
      const formattedPhone = formatPhoneNumber(phoneNumber)
 
      // creating subscription

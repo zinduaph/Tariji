@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useState, useEffect, useContext, useCallback } from 'react';
-import products from '../components/dummyProduct';
+import { useState, useEffect, useContext } from 'react';
 import { PlusCircle, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { shopContext } from '../context/shopContext';
 import toast from 'react-hot-toast';
@@ -32,10 +31,9 @@ const Product = () => {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [image, setImage] = useState('');
-    const { addtocart, currency } = useContext(shopContext);
-     const {backendUrl,items} = useContext(shopContext);
+    
+    const { addtocart, currency, backendUrl } = useContext(shopContext);
     // Modal states
-    const itemArray = Array.isArray(items) ? items : [];
     const [showBuyModal, setShowBuyModal] = useState(false);
     const [formData, setFormData] = useState({ 
         name: '', 
@@ -46,19 +44,44 @@ const Product = () => {
     const [paymentResult, setPaymentResult] = useState(null);
 
     useEffect(() => {
-        if (!productId || itemArray.length === 0) {
+        if (!productId) {
             setLoading(false);
             return;
         }
-        
+
+        const controller = new AbortController();
         const fetchProduct = async () => {
-            const item = itemArray.find(p => p._id.toString() === productId.toString());
-            setProduct(item);
-            setImage(item?.image);
-            setLoading(false);
+            setLoading(true);
+            try {
+                const response = await fetch(`${backendUrl}/api/product/${productId}`, {
+                    signal: controller.signal
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    setProduct(null);
+                    return;
+                }
+
+                setProduct(data.product);
+                setImage(Array.isArray(data.product.image) ? data.product.image[0] : data.product.image);
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error fetching product:', error);
+                    toast.error('Failed to load product');
+                    setProduct(null);
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
+            }
         };
+
         fetchProduct();
-    }, [productId, itemArray]);
+
+        return () => controller.abort();
+    }, [productId, backendUrl]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

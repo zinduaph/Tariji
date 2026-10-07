@@ -5,6 +5,117 @@ import { shopContext } from "../context/shopContext";
 import { X, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
+const CheckoutModal = ({
+    onOpen,
+    onClose,
+    paymentResult,
+    formData,
+    handleInputChange,
+    currency,
+    total,
+    isProcessing,
+    handlePlaceOrder
+}) => {
+    if (!onOpen) return null;
+    return (
+        <>
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+                <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+                    <div className="flex justify-between mb-4">
+                        <h2 className="text-xl font-semibold">Complete Purchase</h2>
+                        <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    {paymentResult && (
+                        <div className={`mb-4 p-3 rounded-md ${
+                            paymentResult.status === 'success' ? 'bg-green-100' :
+                            paymentResult.status === 'pending' ? 'bg-yellow-100' :
+                            'bg-red-100'
+                        }`}>
+                            <div className="flex items-center gap-2">
+                                {paymentResult.status === 'success' && <CheckCircle className="text-green-600" size={20} />}
+                                {paymentResult.status === 'pending' && <Loader2 className="text-yellow-600 animate-spin" size={20} />}
+                                {paymentResult.status === 'error' && <AlertCircle className="text-red-600" size={20} />}
+                                <p className={`text-sm ${
+                                    paymentResult.status === 'success' ? 'text-green-800' :
+                                    paymentResult.status === 'pending' ? 'text-yellow-800' :
+                                    'text-red-800'
+                                }`}>
+                                    {paymentResult.message}
+                                </p>
+                            </div>
+                            {paymentResult.status === 'success' && paymentResult.mpesaReceipt && (
+                                <p className="text-xs text-green-600 mt-1">Receipt: {paymentResult.mpesaReceipt}</p>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="space-y-4 mb-6">
+                        <input
+                            type="text"
+                            name="name"
+                            placeholder="Full Name *"
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Email Address *"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                        <input
+                            type="tel"
+                            name="phone"
+                            placeholder="Phone Number (07XXXXXXXX) *"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                    </div>
+
+                    <div className="mb-4 p-3 bg-orange-50 rounded-md">
+                        <p className="text-lg font-semibold">Total: <span className="text-orange-600">{currency}{total.toFixed(2)}</span></p>
+                        <p className="text-sm text-gray-600">Digital products - delivered instantly via email</p>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handlePlaceOrder}
+                            disabled={isProcessing || paymentResult?.status === 'success'}
+                            className={`flex-1 px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 ${
+                                isProcessing || paymentResult?.status === 'success'
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-orange-500 hover:bg-orange-600'
+                            }`}
+                        >
+                            {isProcessing ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={18} />
+                                    Processing...
+                                </>
+                            ) : (
+                                'Pay with M-pesa'
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};
+
 const CheckoutPage = () => {
     const { currency, cartProducts, getTotalCartAmount, removeFromCart, cartItems: contextCartItems } = useContext(shopContext);
     const [cartItems, setCartItems] = useState([]);
@@ -172,108 +283,6 @@ const CheckoutPage = () => {
         }
     };
 
-    const Modal = ({ onOpen, onClose }) => {
-        if (!onOpen) return null;
-        return (
-            <>
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-                        <div className="flex justify-between mb-4">
-                            <h2 className="text-xl font-semibold">Complete Purchase</h2>
-                            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        {/* Payment Result Display */}
-                        {paymentResult && (
-                            <div className={`mb-4 p-3 rounded-md ${
-                                paymentResult.status === 'success' ? 'bg-green-100' :
-                                paymentResult.status === 'pending' ? 'bg-yellow-100' :
-                                'bg-red-100'
-                            }`}>
-                                <div className="flex items-center gap-2">
-                                    {paymentResult.status === 'success' && <CheckCircle className="text-green-600" size={20} />}
-                                    {paymentResult.status === 'pending' && <Loader2 className="text-yellow-600 animate-spin" size={20} />}
-                                    {paymentResult.status === 'error' && <AlertCircle className="text-red-600" size={20} />}
-                                    <p className={`text-sm ${
-                                        paymentResult.status === 'success' ? 'text-green-800' :
-                                        paymentResult.status === 'pending' ? 'text-yellow-800' :
-                                        'text-red-800'
-                                    }`}>
-                                        {paymentResult.message}
-                                    </p>
-                                </div>
-                                {paymentResult.status === 'success' && paymentResult.mpesaReceipt && (
-                                    <p className="text-xs text-green-600 mt-1">Receipt: {paymentResult.mpesaReceipt}</p>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="space-y-4 mb-6">
-                            <input
-                                type="text"
-                                name="name"
-                                placeholder="Full Name *"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Email Address *"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                            <input
-                                type="tel"
-                                name="phone"
-                                placeholder="Phone Number (07XXXXXXXX) *"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
-
-                        <div className="mb-4 p-3 bg-orange-50 rounded-md">
-                            <p className="text-lg font-semibold">Total: <span className="text-orange-600">{currency}{total.toFixed(2)}</span></p>
-                            <p className="text-sm text-gray-600">Digital products - delivered instantly via email</p>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={onClose}
-                                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handlePlaceOrder}
-                                disabled={isProcessing || paymentResult?.status === 'success'}
-                                className={`flex-1 px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 ${
-                                    isProcessing || paymentResult?.status === 'success'
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : 'bg-orange-500 hover:bg-orange-600'
-                                }`}
-                            >
-                                {isProcessing ? (
-                                    <>
-                                        <Loader2 className="animate-spin" size={18} />
-                                        Processing...
-                                    </>
-                                ) : (
-                                    'Pay with Paystack'
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </>
-        );
-    };
-
     return (
         <div className="container mt-20 md:mt-19 mx-auto p-4 max-w-4xl">
             <h1 className="text-3xl font-bold mb-6">Checkout <span className="text-orange-500">page</span></h1>
@@ -335,15 +344,22 @@ const CheckoutPage = () => {
                             onClick={handlePlaceOrderClick}
                             className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 transition-colors text-lg font-semibold"
                         >
-                            Pay with Paystack
+                            Pay with M-pesa
                         </button>
                     </div>
                 </>
             )}
 
-            <Modal 
+            <CheckoutModal
                 onOpen={showPlaceOrderModal}
                 onClose={() => setShowPlaceOrderModal(false)}
+                paymentResult={paymentResult}
+                formData={formData}
+                handleInputChange={handleInputChange}
+                currency={currency}
+                total={total}
+                isProcessing={isProcessing}
+                handlePlaceOrder={handlePlaceOrder}
             />
         </div>
     );

@@ -21,6 +21,7 @@ const orderSchema = new mongoose.Schema({
         productName: String,
         downloadUrl: String,
         expiresAt: Date,
+        downloadTokenHash: String,
         delivered: { type: Boolean, default: false }
     }],
     sellerId: { type: String },

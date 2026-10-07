@@ -89,7 +89,7 @@ const Pricing = () => {
         },
         {
             name: "Growth Plan",
-            price: "ksh1000",
+            price: "ksh250",
             period: "/month",
             products: "10 products",
             commission: "5% commission fee",
@@ -101,7 +101,7 @@ const Pricing = () => {
         },
         {
             name: "Pro Plan",
-            price: "ksh1500",
+            price: "ksh500",
             period: "/month",
             products: "Unlimited products",
             commission: "3% commission fee",

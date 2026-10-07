@@ -13,8 +13,15 @@ const productSchema = new mongoose.Schema({
         enum: ['physical', 'ebook', 'course', 'template', 'digital'],
         default: 'physical'
     },
-    downloadUrl: { type: String }, // Secure download link for digital products
-    downloadExpiry: { type: Number, default: 7 }, // Days until link expires
+    pdfFile: {type: String,
+             publicId: String, // Store the public ID for Cloudinary
+             originalName:String, // Store the original file name
+    },
+    downloadUrl: { type: String },
+    downloadPublicId: { type: String },
+    downloadResourceType: { type: String },
+    downloadFormat: { type: String },
+    downloadExpiry: { type: Number, default: 48 }, // Hours until link expires
     fileSize: { type: String }, // Optional file size display
     fileFormat: { type: String } // Optional file format (PDF, ZIP, etc.)
 })

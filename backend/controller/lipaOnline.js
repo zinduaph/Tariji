@@ -4,6 +4,7 @@ import orderModel from '../model/order.js'
 import productModel from '../model/product.js'
 import { getNgrokUrl } from '../utils/ngrok-config.js';
 import { sendEmail } from '../config/nodemailer.js';
+import { addProductDownloadLink } from '../utils/digitalDownloads.js';
 import crypto from 'crypto';
 
 
@@ -80,10 +81,12 @@ const fulfillPaystackCartPayment = async (paymentRecord, transaction) => {
     let downloadLinksHtml = '';
     for (const item of cartItems) {
         const product = await productModel.findById(item.productId);
-        downloadLinksHtml += product?.downloadUrl
-            ? `<div style="margin: 10px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;"><strong>${item.productName}</strong><br/><a href="${product.downloadUrl}" style="color: #e67e22; font-weight: bold;">Click here to download your product</a></div>`
+        const downloadLink = product ? addProductDownloadLink(order, product) : null;
+        downloadLinksHtml += downloadLink
+            ? `<div style="margin: 10px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;"><strong>${item.productName}</strong><br/><a href="${downloadLink.downloadUrl}" style="color: #e67e22; font-weight: bold;">Click here to download your product</a><br/>Link expires: ${downloadLink.expiresAt.toLocaleDateString('en-US')}</div>`
             : `<div style="margin: 10px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;"><strong>${item.productName}</strong><br/><span style="color: #666;">Download link not available</span></div>`;
     }
+    await order.save();
 
     await sendEmail(
         paymentRecord.email,
@@ -397,13 +400,15 @@ export const lipaOnlineCallback = async (req, res) => {
             for (const item of cartItems) {
                 try {
                     const product = await productModel.findById(item.productId);
-                    if (product && product.downloadUrl) {
+                    const downloadLink = product ? addProductDownloadLink(order, product) : null;
+                    if (downloadLink) {
                         downloadLinksHtml += `
                         <div style="margin: 10px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
                             <strong>${item.productName}</strong><br/>
-                            <a href="${product.downloadUrl}" style="color: #e67e22; font-weight: bold;">
+                            <a href="${downloadLink.downloadUrl}" style="color: #e67e22; font-weight: bold;">
                                 Click here to download your product
-                            </a>
+                            </a><br/>
+                            Link expires: ${downloadLink.expiresAt.toLocaleDateString('en-US')}
                         </div>`;
                     } else {
                         downloadLinksHtml += `
@@ -416,6 +421,7 @@ export const lipaOnlineCallback = async (req, res) => {
                     console.error('Error fetching product for download URL:', error);
                 }
             }
+            await order.save();
             
             const emailHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

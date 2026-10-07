@@ -5,7 +5,8 @@ import {
     sendAllDownloadLinks, 
     getOrdersNeedingDelivery,
     getAllSellerOrders,
-    getMyDigitalProducts 
+    getMyDigitalProducts,
+    downloadProductFile
 } from '../controller/deliveryController.js';
 
 const router = express.Router();
@@ -18,5 +19,6 @@ router.get('/pending-deliveries', authMiddleware, getOrdersNeedingDelivery);
 
 // Buyer routes
 router.get('/my-digital-products', authMiddleware, getMyDigitalProducts);
+router.get('/download/:token', downloadProductFile);
 
 export default router;
