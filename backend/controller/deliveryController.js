@@ -30,6 +30,7 @@ const sendDigitalProductEmail = async (buyer, order, product, downloadUrl, expir
                     <h3 style="margin-top: 0; color: #1f2937;">${product.name}</h3>
                     <p><strong>Product Type:</strong> ${productTypeLabels[product.productType] || 'Digital Product'}</p>
                     <p><strong>Order ID:</strong> ${order._id}</p>
+                    <p><strong>Download Instructions:</strong> Once you click the download link, the product will be automatically downloaded to your device</p>
                     <p><strong>Download Link:</strong> <a href="${downloadUrl}" style="color: #2563eb;">Click here to download</a></p>
                     <p><strong>Link Expires:</strong> ${new Date(expiresAt).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
                 </div>
